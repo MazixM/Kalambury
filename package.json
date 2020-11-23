@@ -2,7 +2,7 @@
   "name": "test-socket.io",
   "version": "0.0.1",
   "private": true,
-  "description": "Testowy opis package.json",
+  "description": "Testowy opis z pliku package.json",
   "scripts": {
     "start": "node ./bin/www"
   },
