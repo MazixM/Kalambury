@@ -10,7 +10,7 @@ app.get('/', function(req, res){
 io.on('connection', function(socket){
   socket.on('chat message', function(jsonString){
     var message = JSON.parse(jsonString);
-    if(message.msg.length > 3)
+    if(message.msg.length > 1 && message.nick.length > 3)
     {
       io.emit('chat message', getCurrentTime() + " " + message.nick + " - " + message.msg);
     }

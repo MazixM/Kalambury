@@ -17,19 +17,34 @@
   <body>
     <ul id="messages"></ul>
     <form action="">
-      <label>Nick</label><input id="nick" />
-      <input id="m" autocomplete="off" /><button>Wyślij</button>
+      <label>Nick</label><input id="nick" placeholder="Podaj nick"/>
+      <input id="m" autocomplete="off" placeholder="Wprowadź wiadomość"/><button>Wyślij</button>
     </form>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
       $(function () {
         var socket = io();
-        $('form').submit(function(){
-          //socket.emit('chat message', $('#nick').val() + " - " + $('#m').val());
-          socket.emit('chat message', JSON.stringify({ nick: $('#nick').val(), msg: $('#m').val() }));
-          $('#m').val('');
-          
+        $('form').submit(function () {
+          var nick = $('#nick').val();
+          var msg = $('#m').val();
+          //Sprawdzanie długości
+          if(nick.length > 3)
+          { 
+            if(msg.length > 1)
+            {
+              //Wysyłanie wiadomości
+              socket.emit('chat message', JSON.stringify({ nick: nick, msg: msg }));
+              $('#m').val('');
+            }else
+            {
+              alert("Wiadomość jest zbyt krótka");
+            }
+          }else
+          {
+            alert("Nick jest zbyt krótki");
+          }
+
           return false;
         });
         socket.on('chat message', function(msg){
