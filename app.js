@@ -17,6 +17,20 @@ io.on('connection', function(socket){
   });
 });
 
+//Event podczas połączenia nowej osoby
+io.sockets.on('connection', newConnection);
+function newConnection(socket)
+{
+  console.log('We have new client: ' + socket.id);
+  io.emit('chat message', getCurrentTime() + " " + "Ktoś nowy właśnie się połączył..." )
+  
+  //Event podczas rozłączenia osoby
+  socket.on('disconnect', function () {
+    console.log('Disconnect ' + socket.id);
+    io.emit('chat message', getCurrentTime() + " " + "Ktoś właśnie się rozłączył...");
+  });
+}
+
 function getCurrentTime()
 {
   var d = new Date();
