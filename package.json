@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "description": "Test socket chat",
   "dependencies": {
+    "bootstrap": "^4.5.3",
     "express": "^4.17.1",
+    "jquery": "^3.5.1",
     "socket.io": "^3.0.3"
   },
   "scripts": {
