@@ -16,10 +16,14 @@ io.on('connection', function (socket) {
     }
   });
   socket.on('drawLine', function (lineFromTo) {
+    //Zapobieganie oszukiwaniu przy wyborze lini
+    if (lineFromTo.lineWidth > 10 || lineFromTo.lineWidth < 1) {
+      return;
+    }
     socket.broadcast.emit('drawLine', lineFromTo);
   });
   socket.on('clear', function () {
-    io.emit('clear');
+    socket.broadcast.emit('clear');
   });
 });
 

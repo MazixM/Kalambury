@@ -87,8 +87,8 @@
     }
 
     canvas {
-      width: 70%;
-      height: 89%;
+      width: 1000px;
+      height: 800px;
       border: 1px solid black;
     }
   </style>
@@ -109,16 +109,29 @@
     </form>
   </div>
   <div class="buttons">
-    <button onclick="clearCanvas();">Wyczyść</button>
+    <button onclick="clearCanvasLocalAndRemote();">Wyczyść</button>
+
     <input type="color" id="color" name="head" value="#e66465">
     <label for="head">Kolor lini</label>
+
+    <select name="lineWidth" id="lineWidth">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5" selected>5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
+    </select>
+    <label for="head">Grubość lini</label>
   </div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-  <!-- Zarządzanie canvas -->
   <script type="text/javascript">
     var lastClearTime = new Date();
-    //socket.io 
     var socket = io();
     //Rysowanie zdalnie
     socket.on('drawLine', function (lineFromTo) {
@@ -126,7 +139,7 @@
     });
     //Zdalne czyszczenie
     socket.on('clear', function (clear) {
-      clearCanvas();
+      clearCanvasLocal();
     });
     // create canvas element and append it to document body
     var canvas = document.getElementById('can');
@@ -139,25 +152,29 @@
     // last known position
     var pos = { x: 0, y: 0 };
 
-    window.addEventListener('resize', resize);
+    //window.addEventListener('resize', resize);
     document.addEventListener('mousemove', draw);
     document.addEventListener('mousedown', setPosition);
     document.addEventListener('mouseenter', setPosition);
 
     // new position from mouse event
     function setPosition(e) {
-      pos.x = e.clientX * 1.425;
-      pos.y = e.clientY * 1.13;
-      //wysłanie do innych użytkowników
-      var point = { x: pos.x, y: pos.y };
+      var rect = canvas.getBoundingClientRect(); // abs. size of element
+      scaleX = canvas.width / rect.width;    // relationship bitmap vs. element for X
+      scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for Y
+
+      pos.x = (e.clientX - rect.left) * scaleX;   // scale mouse coordinates after they have
+      pos.y = (e.clientY - rect.top) * scaleY;     // been adjusted to be relative to element
     }
+
     function sendLineFromTo(lineFromTo) {
       socket.emit('drawLine', lineFromTo);
     }
+
     // Zmiana rozmiaru canvas
     function resize() {
-      ctx.canvas.width = window.innerWidth;
-      ctx.canvas.height = window.innerHeight;
+      ctx.canvas.width = $(window).width();
+      ctx.canvas.height = $(window).height();
     }
 
     function draw(e) {
@@ -165,7 +182,7 @@
 
       ctx.beginPath(); //Rysuj
 
-      ctx.lineWidth = 5;
+      ctx.lineWidth = document.getElementById('lineWidth').value;
       ctx.lineCap = 'round';
       ctx.strokeStyle = document.getElementById('color').value;
 
@@ -174,7 +191,8 @@
       var lineToSend = {
         from: { x: 0, y: 0 },
         to: { x: 0, y: 0 },
-        color: ctx.strokeStyle
+        color: ctx.strokeStyle,
+        lineWidth: ctx.lineWidth
       };
       lineToSend.from.x = pos.x;
       lineToSend.from.y = pos.y;
@@ -205,16 +223,23 @@
       ctx.stroke();
     }
 
-    //Funkcja czyszcząca Canvas lokalnie i zdalnie
-    function clearCanvas() {
+    //Funkcja czyszcząca Canvas lokalnie
+    function clearCanvasLocal() {
       var canvas = document.getElementById('can');
       const context = canvas.getContext('2d');
       context.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    //Funkcja czyszcząca Canvas lokalnie i zdalnie
+    function clearCanvasLocalAndRemote() {
       //Wyślij do serwera informacje o czyszczeniu
       var now = new Date();
-      if ((now.getTime() - lastClearTime.getTime()) >= 5000) {
+      if ((now.getTime() - lastClearTime.getTime()) >= 10000) {
         lastClearTime = now;
+        clearCanvasLocal();
         socket.emit('clear');
+      } else {
+        var timeLeft = Math.floor((lastClearTime.getTime() - now.getTime() + 10000) / 1000);
+        alert("Nie możesz jeszcze odświeżyć. Pozostało " + timeLeft + " sekund.");
       }
     }
     $(function () {
