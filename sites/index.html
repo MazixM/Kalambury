@@ -141,9 +141,11 @@
     socket.on('clear', function (clear) {
       clearCanvasLocal();
     });
+    socket.on('currentPlayersCount', function (msg) {
+      document.title = "Kalambury (" + msg + ")";
+    });
     // create canvas element and append it to document body
     var canvas = document.getElementById('can');
-    //document.body.style.margin = 0;
     canvas.style.position = 'fixed';
 
     var ctx = canvas.getContext('2d');
@@ -151,8 +153,6 @@
 
     // last known position
     var pos = { x: 0, y: 0 };
-
-    //window.addEventListener('resize', resize);
     document.addEventListener('mousemove', draw);
     document.addEventListener('mousedown', setPosition);
     document.addEventListener('mouseenter', setPosition);
@@ -171,7 +171,6 @@
       socket.emit('drawLine', lineFromTo);
     }
 
-    // Zmiana rozmiaru canvas
     function resize() {
       ctx.canvas.width = $(window).width();
       ctx.canvas.height = $(window).height();
@@ -199,25 +198,22 @@
 
       setPosition(e);
 
-      ctx.lineTo(pos.x, pos.y); // to
-
+      ctx.lineTo(pos.x, pos.y); // Do
       lineToSend.to.x = pos.x;
       lineToSend.to.y = pos.y;
+      ctx.stroke(); // Rysuj
 
       //Wysyłanie narysowanej lini do serwera
       sendLineFromTo(lineToSend)
 
-      ctx.stroke(); // Rysuj
     }
 
     //Funkcja dla zdalnego rysowania
     function drawRemoteLine(lineFromTo) {
       ctx.beginPath(); // begin
-
       ctx.lineWidth = 5;
       ctx.lineCap = 'round';
       ctx.strokeStyle = lineFromTo.color;
-
       ctx.moveTo(lineFromTo.from.x, lineFromTo.from.y); // from
       ctx.lineTo(lineFromTo.to.x, lineFromTo.to.y); // to
       ctx.stroke();

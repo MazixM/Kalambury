@@ -8,6 +8,8 @@ app.get('/', function (req, res) {
   res.sendFile(__dirname + '/sites/index.html');
 });
 
+var currentPlayersCount = 0;
+
 io.on('connection', function (socket) {
   socket.on('chat message', function (jsonString) {
     var message = JSON.parse(jsonString);
@@ -30,11 +32,15 @@ io.on('connection', function (socket) {
 //Event podczas połączenia nowej osoby
 io.sockets.on('connection', newConnection);
 function newConnection(socket) {
+  currentPlayersCount += 1;
+  io.emit('currentPlayersCount', currentPlayersCount);
   console.log('We have new client: ' + socket.id);
   socket.broadcast.emit('chat message', getCurrentTime() + " " + "Ktoś nowy właśnie się połączył...")
 
   //Event podczas rozłączenia osoby
   socket.on('disconnect', function () {
+    currentPlayersCount -= 1;
+    io.emit('currentPlayersCount', currentPlayersCount);
     console.log('Disconnect ' + socket.id);
     socket.broadcast.emit('chat message', getCurrentTime() + " " + "Ktoś właśnie się rozłączył...");
   });
