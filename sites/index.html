@@ -119,8 +119,8 @@
     //socket.io 
     var socket = io();
     //Rysowanie zdalnie
-    socket.on('point', function (point) {
-      drawRemotePoint(point);
+    socket.on('drawLine', function (lineFromTo) {
+      drawRemoteLine(lineFromTo);
     });
     //Zdalne czyszczenie
     socket.on('clear', function (clear) {
@@ -128,11 +128,9 @@
     });
     // create canvas element and append it to document body
     var canvas = document.getElementById('can');
-    // some hotfixes... ( ≖_≖)
-    document.body.style.margin = 0;
+    //document.body.style.margin = 0;
     canvas.style.position = 'fixed';
 
-    // get canvas 2D context and set him correct size
     var ctx = canvas.getContext('2d');
     resize();
 
@@ -150,39 +148,60 @@
       pos.y = e.clientY * 1.13;
       //wysłanie do innych użytkowników
       var point = { x: pos.x, y: pos.y };
-      sendPosition(point);
     }
-    function sendPosition(point) {
-      socket.emit('point', point);
+    function sendLineFromTo(lineFromTo) {
+      socket.emit('drawLine', lineFromTo);
     }
-    // resize canvas
+    // Zmiana rozmiaru canvas
     function resize() {
       ctx.canvas.width = window.innerWidth;
       ctx.canvas.height = window.innerHeight;
     }
 
     function draw(e) {
-      // mouse left button must be pressed
       if (e.buttons !== 1) return;
 
-      ctx.beginPath(); // begin
+      ctx.beginPath(); //Rysuj
 
       ctx.lineWidth = 5;
       ctx.lineCap = 'round';
       ctx.strokeStyle = '#c0392b';
 
-      ctx.moveTo(pos.x, pos.y); // from
+      ctx.moveTo(pos.x, pos.y); // Od
+
+      var lineToSend = {
+        from: { x: 0, y: 0 },
+        to: { x: 0, y: 0 }
+      };
+      lineToSend.from.x = pos.x;
+      lineToSend.from.y = pos.y;
+
       setPosition(e);
+
       ctx.lineTo(pos.x, pos.y); // to
 
-      ctx.stroke(); // draw it!
+      lineToSend.to.x = pos.x;
+      lineToSend.to.y = pos.y;
+
+      //Wysyłanie narysowanej lini do serwera
+      sendLineFromTo(lineToSend)
+
+      ctx.stroke(); // Rysuj
     }
+
     //Funkcja dla zdalnego rysowania
-    function drawRemotePoint(point) {
-      //TODO do poprawy rysowanie 
-      ctx.strokeStyle = '#6666';
-      ctx.fillRect(point.x, point.y, 4, 4);
+    function drawRemoteLine(lineFromTo) {
+      ctx.beginPath(); // begin
+
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#555';
+
+      ctx.moveTo(lineFromTo.from.x, lineFromTo.from.y); // from
+      ctx.lineTo(lineFromTo.to.x, lineFromTo.to.y); // to
+      ctx.stroke();
     }
+
     //Funkcja czyszcząca Canvas lokalnie i zdalnie
     function clearCanvas() {
       var canvas = document.getElementById('can');

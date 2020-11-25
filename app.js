@@ -15,8 +15,8 @@ io.on('connection', function (socket) {
       io.emit('chat message', getCurrentTime() + " " + message.nick + " - " + message.msg);
     }
   });
-  socket.on('point', function (point) {
-    io.emit('point', point);
+  socket.on('drawLine', function (lineFromTo) {
+    socket.broadcast.emit('drawLine', lineFromTo);
   });
   socket.on('clear', function () {
     io.emit('clear');
