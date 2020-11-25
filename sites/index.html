@@ -214,11 +214,7 @@
         socket.emit('clear');
       }
     }
-  </script>
-  <!-- Socket.IO -->
-  <script>
     $(function () {
-      var socket = io();
       $('form').submit(function () {
         var nick = $('#nick').val();
         var msg = $('#m').val();
