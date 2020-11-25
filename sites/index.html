@@ -110,6 +110,8 @@
   </div>
   <div class="buttons">
     <button onclick="clearCanvas();">Wyczyść</button>
+    <input type="color" id="color" name="head" value="#e66465">
+    <label for="head">Kolor lini</label>
   </div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
@@ -165,13 +167,14 @@
 
       ctx.lineWidth = 5;
       ctx.lineCap = 'round';
-      ctx.strokeStyle = '#c0392b';
+      ctx.strokeStyle = document.getElementById('color').value;
 
       ctx.moveTo(pos.x, pos.y); // Od
 
       var lineToSend = {
         from: { x: 0, y: 0 },
-        to: { x: 0, y: 0 }
+        to: { x: 0, y: 0 },
+        color: ctx.strokeStyle
       };
       lineToSend.from.x = pos.x;
       lineToSend.from.y = pos.y;
@@ -195,7 +198,7 @@
 
       ctx.lineWidth = 5;
       ctx.lineCap = 'round';
-      ctx.strokeStyle = '#555';
+      ctx.strokeStyle = lineFromTo.color;
 
       ctx.moveTo(lineFromTo.from.x, lineFromTo.from.y); // from
       ctx.lineTo(lineFromTo.to.x, lineFromTo.to.y); // to
