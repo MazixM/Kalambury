@@ -32,6 +32,9 @@ io.on('connection', function (socket) {
         //Wybranie nowej osoby rysującej
         findNewDrawingPerson();
         //Aktualnie gra toczy się do 5 wygranych
+        if (points[socket.id] == undefined) {
+          points[socket.id] = 0;
+        }
         points[socket.id]++;
         if (points[socket.id] < 5) {
           io.emit('chat message', message.nick + " zgaduje hasło i zdobywa 1 punkt! Łącznie posiada ich : " + points[socket.id]);
@@ -39,6 +42,7 @@ io.on('connection', function (socket) {
           //Informacja o wygranej
           io.emit('chat message', message.nick + " zgaduje hasło i wygrywa! Gratulacje! ");
           //Reset wyników
+          delete points;
           points = {};
         }
         //Wyślij informację o nowym haśle
@@ -68,7 +72,6 @@ io.on('connection', function (socket) {
 io.sockets.on('connection', newConnection);
 function newConnection(socket) {
   socket.emit('chat message', getCurrentTime() + " " + "Witaj! Twoje id, to: " + socket.id);
-  points[socket.id] = 0;
   if (actualMainPlayerId == null) {
     actualMainPlayerId = socket.id;
     createNewRandomPassword();
