@@ -57,13 +57,19 @@ io.on("connection", function (socket) {
           delete points;
           points = {};
         }
-        //Hasło zostało odgadnięte
+        //Znajdź nowe hasło
         createNewRandomPassword();
         //Wybranie nowej osoby rysującej
         findNewDrawingPerson();
       }
-      //Generowanie nowego hasła przez osobę rysującą
+      if (actualDrawingPlayerId != socket.id && message.msg == "/losuj") {
+        //Znajdź nowe hasło
+        createNewRandomPassword();
+        //Wybranie nowej osoby rysującej
+        findNewDrawingPerson();
+      }
       if (actualDrawingPlayerId == socket.id && message.msg == "/nowe") {
+        //Generowanie nowego hasła przez osobę rysującą
         createNewRandomPassword();
         io.emit(
           "chat message",
