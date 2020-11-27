@@ -1,0 +1,36 @@
+{
+    // Editor and explorer.
+    "editor.codeActionsOnSave": {
+        "source.fixAll": true
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.detectIndentation": false,
+    "editor.fontLigatures": true,
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "editor.rulers": [150],
+    "editor.wordWrap": "bounded",
+    "editor.wordWrapColumn": 150,
+    "search.exclude": {
+        "**/dist": true,
+        "package-lock.json": true
+    },
+
+    // Consistency.
+    "files.eol": "\n",
+    "files.trimTrailingWhitespace": true,
+
+    // Git.
+    "git.autofetch": true,
+
+    // JavaScript.
+    "javascript.suggestionActions.enabled": false,
+
+    // TypeScript.
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "typescript.preferences.quoteStyle": "single",
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "[html]": {
+        "editor.defaultFormatter": "vscode.html-language-features"
+    }
+}

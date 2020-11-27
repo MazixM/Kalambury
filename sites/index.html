@@ -2,267 +2,272 @@
 <html>
 
 <head>
-  <title>Kalambury</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <title>Kalambury</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    body {
-      font: 13px Helvetica, Arial;
-      height: 100%;
-      width: 100vw;
-    }
+        body {
+            font: 13px Helvetica, Arial;
+            height: 100%;
+            width: 100vw;
+        }
 
-    /* Czat */
-    .chat {
-      margin: 3px;
-      width: 29vw;
-      height: 89vh;
-      float: right;
-      border: 1px solid black;
-    }
+        /* Czat */
+        .chat {
+            margin: 3px;
+            width: 29vw;
+            height: 89vh;
+            float: right;
+            border: 1px solid black;
+            overflow: scroll;
+        }
 
-    .chat-input {
-      float: right;
-      background: #888;
-      padding: 5px;
-      bottom: 0;
-      width: 29vw;
-      height: 9vh;
-      min-height: 65px;
-    }
+        .chat-input {
+            float: right;
+            background: #888;
+            padding: 5px;
+            bottom: 0;
+            width: 29vw;
+            height: 9vh;
+            min-height: 65px;
+        }
 
-    #nick {
-      border: 1px solid steelblue;
-      height: 15%;
-      width: 40%;
-      margin-right: .5%;
-    }
+        #nick {
+            border: 1px solid steelblue;
+            height: 15%;
+            width: 40%;
+            margin-right: .5%;
+        }
 
-    #m {
-      border: 1px solid steelblue;
-      height: 20%;
-      width: 75%;
-      margin-right: .5%;
-    }
+        #m {
+            border: 1px solid steelblue;
+            height: 20%;
+            width: 75%;
+            margin-right: .5%;
+        }
 
-    form button {
-      width: 24%;
-      text-align: center;
-      background: rgb(130, 224, 255);
-      border: none;
-    }
+        form button {
+            width: 24%;
+            text-align: center;
+            background: rgb(130, 224, 255);
+            border: none;
+        }
 
-    #messages {
-      list-style-type: none;
-      margin: 0;
-      padding: 0;
-      margin-bottom: 40px;
-    }
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            margin-bottom: 40px;
+        }
 
-    #messages li {
-      padding: 5px 10px;
-    }
+        #messages li {
+            padding: 5px 10px;
+        }
 
-    #messages li:nth-child(odd) {
-      background: #eee;
-    }
+        #messages li:nth-child(odd) {
+            background: #eee;
+        }
 
-    /* Gra */
-    .game {
-      width: 70vw;
-      height: 100vh;
-      float: left;
-      padding: 3px;
-    }
+        /* Gra */
+        .game {
+            width: 70vw;
+            height: 100vh;
+            float: left;
+            padding: 3px;
+        }
 
-    .buttons {
-      bottom: 5px;
-      left: 5px;
-      position: fixed;
-      float: left;
-    }
+        .buttons {
+            bottom: 5px;
+            left: 5px;
+            position: fixed;
+            float: left;
+        }
 
-    canvas {
-      width: 1000px;
-      height: 800px;
-      border: 1px solid black;
-    }
-  </style>
+        canvas {
+            width: 1000px;
+            height: 800px;
+            border: 1px solid black;
+        }
+    </style>
 </head>
 
 <body>
-  <div class="game">
-    <canvas id="can"></canvas>
-  </div>
+    <div class="game">
+        <canvas id="can"></canvas>
+    </div>
 
-  <div class="chat">
-    <ul id="messages"></ul>
-  </div>
-  <div class="chat-input">
-    <form action="">
-      <input id="nick" placeholder="Podaj nick" />
-      <input id="m" autocomplete="off" placeholder="Wprowadź wiadomość" /><button>Wyślij</button>
-    </form>
-  </div>
-  <div class="buttons">
-    <button onclick="clearCanvasLocalAndRemote();">Wyczyść</button>
+    <div class="chat" id="chat">
+        <ul id="messages"></ul>
+    </div>
+    <div class="chat-input">
+        <form action="">
+            <input id="nick" placeholder="Podaj nick" />
+            <input id="m" autocomplete="off" placeholder="Wprowadź wiadomość" /><button>Wyślij</button>
+        </form>
+    </div>
+    <div class="buttons">
+        <button onclick="clearCanvasLocalAndRemote();">Wyczyść</button>
 
-    <input type="color" id="color" name="head" value="#e66465">
-    <label for="head">Kolor lini</label>
+        <input type="color" id="color" name="head" value="#e66465">
+        <label for="head">Kolor lini</label>
 
-    <select name="lineWidth" id="lineWidth">
-      <option value="1">1</option>
-      <option value="2">2</option>
-      <option value="3">3</option>
-      <option value="4">4</option>
-      <option value="5" selected>5</option>
-      <option value="6">6</option>
-      <option value="7">7</option>
-      <option value="8">8</option>
-      <option value="9">9</option>
-      <option value="10">10</option>
-    </select>
-    <label for="head">Grubość lini</label>
-  </div>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-  <script type="text/javascript">
-    var lastClearTime = new Date();
-    var socket = io();
-    //Rysowanie zdalnie
-    socket.on('drawLine', function (lineFromTo) {
-      drawRemoteLine(lineFromTo);
-    });
-    //Zdalne czyszczenie
-    socket.on('clear', function (clear) {
-      clearCanvasLocal();
-    });
-    socket.on('currentPlayersCount', function (msg) {
-      document.title = "Kalambury (" + msg + ")";
-    });
-    // create canvas element and append it to document body
-    var canvas = document.getElementById('can');
-    canvas.style.position = 'fixed';
+        <select name="lineWidth" id="lineWidth">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+        </select>
+        <label for="head">Grubość lini</label>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script type="text/javascript">
+        var lastClearTime = new Date();
+        var socket = io();
+        //Rysowanie zdalnie
+        socket.on('drawLine', function (lineFromTo) {
+            drawRemoteLine(lineFromTo);
+        });
+        //Zdalne czyszczenie
+        socket.on('clear', function (clear) {
+            clearCanvasLocal();
+        });
+        socket.on('currentPlayersCount', function (msg) {
+            document.title = "Kalambury (" + msg + ")";
+        });
+        // create canvas element and append it to document body
+        var canvas = document.getElementById('can');
+        canvas.style.position = 'fixed';
 
-    var ctx = canvas.getContext('2d');
-    resize();
+        var ctx = canvas.getContext('2d');
+        resize();
 
-    // last known position
-    var pos = { x: 0, y: 0 };
-    document.addEventListener('mousemove', draw);
-    document.addEventListener('mousedown', setPosition);
-    document.addEventListener('mouseenter', setPosition);
+        // last known position
+        var pos = { x: 0, y: 0 };
+        document.addEventListener('mousemove', draw);
+        document.addEventListener('mousedown', setPosition);
+        document.addEventListener('mouseenter', setPosition);
 
-    // new position from mouse event
-    function setPosition(e) {
-      var rect = canvas.getBoundingClientRect(); // abs. size of element
-      scaleX = canvas.width / rect.width;    // relationship bitmap vs. element for X
-      scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for Y
+        // new position from mouse event
+        function setPosition(e) {
+            var rect = canvas.getBoundingClientRect(); // abs. size of element
+            scaleX = canvas.width / rect.width;    // relationship bitmap vs. element for X
+            scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for Y
 
-      pos.x = (e.clientX - rect.left) * scaleX;   // scale mouse coordinates after they have
-      pos.y = (e.clientY - rect.top) * scaleY;     // been adjusted to be relative to element
-    }
-
-    function sendLineFromTo(lineFromTo) {
-      socket.emit('drawLine', lineFromTo);
-    }
-
-    function resize() {
-      ctx.canvas.width = $(window).width();
-      ctx.canvas.height = $(window).height();
-    }
-
-    function draw(e) {
-      if (e.buttons !== 1) return;
-
-      ctx.beginPath(); //Rysuj
-
-      ctx.lineWidth = document.getElementById('lineWidth').value;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = document.getElementById('color').value;
-
-      ctx.moveTo(pos.x, pos.y); // Od
-
-      var lineToSend = {
-        from: { x: 0, y: 0 },
-        to: { x: 0, y: 0 },
-        color: ctx.strokeStyle,
-        lineWidth: ctx.lineWidth
-      };
-      lineToSend.from.x = pos.x;
-      lineToSend.from.y = pos.y;
-
-      setPosition(e);
-
-      ctx.lineTo(pos.x, pos.y); // Do
-      lineToSend.to.x = pos.x;
-      lineToSend.to.y = pos.y;
-      ctx.stroke(); // Rysuj
-
-      //Wysyłanie narysowanej lini do serwera
-      sendLineFromTo(lineToSend)
-
-    }
-
-    //Funkcja dla zdalnego rysowania
-    function drawRemoteLine(lineFromTo) {
-      ctx.beginPath(); // begin
-      ctx.lineWidth = 5;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = lineFromTo.color;
-      ctx.moveTo(lineFromTo.from.x, lineFromTo.from.y); // from
-      ctx.lineTo(lineFromTo.to.x, lineFromTo.to.y); // to
-      ctx.stroke();
-    }
-
-    //Funkcja czyszcząca Canvas lokalnie
-    function clearCanvasLocal() {
-      var canvas = document.getElementById('can');
-      const context = canvas.getContext('2d');
-      context.clearRect(0, 0, canvas.width, canvas.height);
-    }
-    //Funkcja czyszcząca Canvas lokalnie i zdalnie
-    function clearCanvasLocalAndRemote() {
-      //Wyślij do serwera informacje o czyszczeniu
-      var now = new Date();
-      if ((now.getTime() - lastClearTime.getTime()) >= 10000) {
-        lastClearTime = now;
-        clearCanvasLocal();
-        socket.emit('clear');
-      } else {
-        var timeLeft = Math.floor((lastClearTime.getTime() - now.getTime() + 10000) / 1000);
-        alert("Nie możesz jeszcze odświeżyć. Pozostało " + timeLeft + " sekund.");
-      }
-    }
-    $(function () {
-      $('form').submit(function () {
-        var nick = $('#nick').val();
-        var msg = $('#m').val();
-        //Sprawdzanie długości
-        if (nick.length > 3) {
-          if (msg.length > 1) {
-            //Wysyłanie wiadomości
-            socket.emit('chat message', JSON.stringify({ nick: nick, msg: msg }));
-            $('#m').val('');
-          } else {
-            alert("Wiadomość jest zbyt krótka");
-          }
-        } else {
-          alert("Nick jest zbyt krótki");
+            pos.x = (e.clientX - rect.left) * scaleX;   // scale mouse coordinates after they have
+            pos.y = (e.clientY - rect.top) * scaleY;     // been adjusted to be relative to element
         }
 
-        return false;
-      });
-      socket.on('chat message', function (msg) {
-        $('#messages').append($('<li>').text(msg));
-        window.scrollTo(0, document.body.scrollHeight);
-      });
-    });
-  </script>
+        function sendLineFromTo(lineFromTo) {
+            socket.emit('drawLine', lineFromTo);
+        }
+
+        function resize() {
+            ctx.canvas.width = $(window).width();
+            ctx.canvas.height = $(window).height();
+        }
+
+        function draw(e) {
+            if (e.buttons !== 1) return;
+
+            ctx.beginPath(); //Rysuj
+
+            ctx.lineWidth = document.getElementById('lineWidth').value;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = document.getElementById('color').value;
+
+            ctx.moveTo(pos.x, pos.y); // Od
+
+            var lineToSend = {
+                from: { x: 0, y: 0 },
+                to: { x: 0, y: 0 },
+                color: ctx.strokeStyle,
+                lineWidth: ctx.lineWidth
+            };
+            lineToSend.from.x = pos.x;
+            lineToSend.from.y = pos.y;
+
+            setPosition(e);
+
+            ctx.lineTo(pos.x, pos.y); // Do
+            lineToSend.to.x = pos.x;
+            lineToSend.to.y = pos.y;
+            ctx.stroke(); // Rysuj
+
+            //Wysyłanie narysowanej lini do serwera
+            sendLineFromTo(lineToSend)
+
+        }
+
+        //Funkcja dla zdalnego rysowania
+        function drawRemoteLine(lineFromTo) {
+            ctx.beginPath(); // begin
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = lineFromTo.color;
+            ctx.moveTo(lineFromTo.from.x, lineFromTo.from.y); // from
+            ctx.lineTo(lineFromTo.to.x, lineFromTo.to.y); // to
+            ctx.stroke();
+        }
+
+        //Funkcja czyszcząca Canvas lokalnie
+        function clearCanvasLocal() {
+            var canvas = document.getElementById('can');
+            const context = canvas.getContext('2d');
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        //Funkcja czyszcząca Canvas lokalnie i zdalnie
+        function clearCanvasLocalAndRemote() {
+            //Wyślij do serwera informacje o czyszczeniu
+            var now = new Date();
+            if ((now.getTime() - lastClearTime.getTime()) >= 10000) {
+                lastClearTime = now;
+                clearCanvasLocal();
+                socket.emit('clear');
+            } else {
+                var timeLeft = Math.floor((lastClearTime.getTime() - now.getTime() + 10000) / 1000);
+                alert("Nie możesz jeszcze odświeżyć. Pozostało " + timeLeft + " sekund.");
+            }
+        }
+
+        //Wysyłanie i odbieranie wiadomości
+        $(function () {
+            $('form').submit(function () {
+                var nick = $('#nick').val();
+                var msg = $('#m').val();
+                //Sprawdzanie długości
+                if (nick.length > 3) {
+                    if (msg.length > 1) {
+                        //Wysyłanie wiadomości
+                        var message = { nick: nick, msg: msg };
+                        socket.emit('chat message', message);
+                        $('#m').val('');
+                    } else {
+                        alert("Wiadomość jest zbyt krótka");
+                    }
+                } else {
+                    alert("Nick jest zbyt krótki");
+                }
+
+                return false;
+            });
+            socket.on('chat message', function (msg) {
+                $('#messages').append($('<li>').text(msg));
+                $("#chat").scrollTop($("#chat")[0].scrollHeight);
+            });
+        });
+    </script>
 </body>
 
 </html>

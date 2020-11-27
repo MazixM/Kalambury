@@ -1,0 +1,27 @@
+{
+    "recommendations": [
+        // Visuals.
+        "aaron-bond.better-comments",
+        "coenraads.bracket-pair-colorizer-2",
+        "pkief.material-icon-theme",
+        "wesbos.theme-cobalt2",
+
+        // Formatters and linters.
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+
+        // Quality of Life.
+        "britesnow.vscode-toggle-quotes",
+        "henriiik.vscode-sort",
+        "kingdaro.generate-index",
+        "stackbreak.comment-divider",
+        "usernamehw.errorlens",
+        "zengxingxin.sort-js-object-keys",
+
+        // Git.
+        "mhutchie.git-graph",
+
+        // Remote development.
+        "ms-vscode-remote.vscode-remote-extensionpack"
+    ]
+}
