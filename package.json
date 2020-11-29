@@ -1,7 +1,7 @@
 {
-  "name": "socket-chat",
-  "version": "0.0.1",
-  "description": "Test socket chat",
+  "name": "kalambury",
+  "version": "0.9.1",
+  "description": "Kalambury",
   "dependencies": {
     "bootstrap": "^4.5.3",
     "express": "^4.17.1",
