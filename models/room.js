@@ -18,7 +18,7 @@ class Room {
     if (this.connectedUsers() >= this.MaxUsers || this.Password != password) {
       return false;
     } else {
-      this.Users[this.connectedUsers() + 1] = user;
+      this.Users[user.Id] = user;
       return true;
     }
   }

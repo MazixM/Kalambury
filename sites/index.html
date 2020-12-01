@@ -36,13 +36,6 @@
             min-height: 65px;
         }
 
-        #nick {
-            border: 1px solid steelblue;
-            height: 15%;
-            width: 40%;
-            margin-right: .5%;
-        }
-
         #m {
             border: 1px solid steelblue;
             height: 20%;
@@ -105,7 +98,6 @@
     </div>
     <div class="chat-input">
         <form action="">
-            <input id="nick" placeholder="Podaj nick" />
             <input id="m" autocomplete="off" placeholder="Wprowadź wiadomość" /><button>Wyślij</button>
         </form>
     </div>
@@ -134,6 +126,30 @@
     <script type="text/javascript">
         var lastClearTime = new Date();
         var socket = io();
+        //Getting nick
+        do {
+            var nick = prompt("Podaj swój nick:");
+            if (nick == null || nick.length < 3) {
+                alert("Nick jest zbyt krótki.");
+            } else if (nick > 20) {
+                alert("Nick jest zbyt długi.");
+            }
+        } while (nick == null || nick.length < 3 || nick.length > 20)
+        //Getting roomId
+        do {
+            var roomId = prompt("Podaj id pokoju [3-10], lub kliknij anuluj, by wybrać domyślny");
+            if (roomId == null || roomId.length < 3) {
+                roomId = "default"
+            } else if (roomId > 10) {
+                alert("Id pokoju jest zbyt długie.");
+            }
+        } while (roomId == "null" || roomId.length < 3 || roomId.length > 10)
+        var user = { nick: nick, roomId: roomId }
+        socket.emit("new user", user);
+        //
+        socket.on('drawLine', function (lineFromTo) {
+            drawRemoteLine(lineFromTo);
+        });
         //Rysowanie zdalnie
         socket.on('drawLine', function (lineFromTo) {
             drawRemoteLine(lineFromTo);
@@ -142,30 +158,34 @@
         socket.on('clear', function (clear) {
             clearCanvasLocal();
         });
+        socket.on('error', function (error) {
+            alert(error);
+            window.location.reload(true);
+        });
+        //Wyświetlanie aktualnej iloścui graczy
         socket.on('currentPlayersCount', function (msg) {
             document.title = "Kalambury (" + msg + ")";
         });
-        // create canvas element and append it to document body
+
         var canvas = document.getElementById('can');
         canvas.style.position = 'fixed';
 
         var ctx = canvas.getContext('2d');
         resize();
 
-        // last known position
+        //Ostatnia znana pozycja
         var pos = { x: 0, y: 0 };
         document.addEventListener('mousemove', draw);
         document.addEventListener('mousedown', setPosition);
         document.addEventListener('mouseenter', setPosition);
 
-        // new position from mouse event
         function setPosition(e) {
-            var rect = canvas.getBoundingClientRect(); // abs. size of element
-            scaleX = canvas.width / rect.width;    // relationship bitmap vs. element for X
-            scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for Y
+            var rect = canvas.getBoundingClientRect();
+            scaleX = canvas.width / rect.width;
+            scaleY = canvas.height / rect.height;
 
-            pos.x = (e.clientX - rect.left) * scaleX;   // scale mouse coordinates after they have
-            pos.y = (e.clientY - rect.top) * scaleY;     // been adjusted to be relative to element
+            pos.x = (e.clientX - rect.left) * scaleX;
+            pos.y = (e.clientY - rect.top) * scaleY;
         }
 
         function sendLineFromTo(lineFromTo) {
@@ -244,20 +264,15 @@
         //Wysyłanie i odbieranie wiadomości
         $(function () {
             $('form').submit(function () {
-                var nick = $('#nick').val();
+                //var nick = $('#nick').val();
                 var msg = $('#m').val();
                 //Sprawdzanie długości
-                if (nick.length > 3) {
-                    if (msg.length > 1) {
-                        //Wysyłanie wiadomości
-                        var message = { nick: nick, msg: msg };
-                        socket.emit('chat message', message);
-                        $('#m').val('');
-                    } else {
-                        alert("Wiadomość jest zbyt krótka");
-                    }
+                if (msg.length > 1) {
+                    //Wysyłanie wiadomości
+                    socket.emit('chat message', msg);
+                    $('#m').val('');
                 } else {
-                    alert("Nick jest zbyt krótki");
+                    alert("Wiadomość jest zbyt krótka");
                 }
 
                 return false;

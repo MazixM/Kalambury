@@ -30,12 +30,18 @@ test("Test max users per room", () => {
   //Create room
   let room = new Room("id", user);
   expect(room.connectedUsers()).toBe(1);
+  //Create simple users
+  let user2 = new User("userid_2", "Simple user");
+  let user3 = new User("userid_3", "Simple user");
+  let user4 = new User("userid_4", "Simple user");
+  let user5 = new User("userid_5", "Simple user");
+  let user6 = new User("userid_6", "Simple user");
   //Add new user x5
-  expect(room.addUser(user)).toBe(true);
-  expect(room.addUser(user)).toBe(true);
-  expect(room.addUser(user)).toBe(true);
-  expect(room.addUser(user)).toBe(true);
-  expect(room.addUser(user)).toBe(false);
+  expect(room.addUser(user2)).toBe(true);
+  expect(room.addUser(user3)).toBe(true);
+  expect(room.addUser(user4)).toBe(true);
+  expect(room.addUser(user5)).toBe(true);
+  expect(room.addUser(user6)).toBe(false);
   expect(room.connectedUsers()).toBe(5);
 });
 test("Test removeing users", () => {
