@@ -1,25 +1,10 @@
 var fs = require("fs");
 var utils = require("./utils");
 var chatManager = require("./chat.manager");
-const Room = require("./models/room");
+//const Room = require("./models/room");
 const User = require("./models/user");
-//Socket.io
-var io;
 //Lista haseł do zgadnięcia
 var passwords = JSON.parse(fs.readFileSync("passwords.json", "utf8"));
-//Aktualne hasło do zgadnięcia
-var actualPassword;
-//Aktualna ilość graczy
-var currentPlayersCount = 0;
-//Aktualnie podłączeni gracze
-var currentPlayersId = [];
-var myClientList = {};
-//Gracz, który aktualnie rysuje
-var actualDrawingPlayerId;
-//Aktualna tabela wyników
-var points = {};
-//Aktualnie używane pokoje
-var rooms = {};
 
 const size = function (obj) {
   var size = 0,
@@ -32,45 +17,20 @@ const size = function (obj) {
 
 module.exports = {
   start: function (io) {
-    this.io = io;
     io.on("connection", function (socket) {
       //New user joined
       socket.on("new user", function (user) {
-        //TODO dodanie opcji z hasłem i max ilością graczy
-        let newUser = new User(socket.id, user.nick);
-        //Check if room was created before
-        if (rooms[user.roomId] != null) {
-          //Try join to room
-          if (rooms[user.roomId].addUser(newUser)) {
-            //Join to socket.io room
-            socket.join(user.roomId);
-            chatManager.sendSystemMessageToSender(
-              socket,
-              "Pomyślnie dołączono do pokoju o id: " + user.roomId
-            );
-            chatManager.sendSystemMessageToOthersInRoom(
-              socket,
-              user.roomId,
-              user.nick + " dołącza do pokoju."
-            );
-          } else {
-            //Room is currently full
-            let error = "Wybrany pokój jest już pełen";
-            socket.emit("error", error);
-            socket.disconnect();
-            return;
-          }
-        } else {
-          //Create default room and join user
-          let newRoom = new Room("default", newUser);
-          //Join to socket.io room
-          socket.join(user.roomId);
-          rooms[user.roomId] = newRoom;
-          chatManager.sendSystemMessageToSender(
-            socket,
-            "Pomyślnie utworzono pokój o id: " + user.roomId
-          );
-        }
+        joinToRoom(socket, user);
+        socket.join(user.roomId);
+        socket.user = new User(socket.id, nick);
+        socket.roomId = user.roomId;
+        socket.nick = user.nick;
+        chatManager.sendSystemMessageToSender(
+          socket,
+          "Pomyślnie dołączono do pokoju o id: " + socket.roomId
+        );
+        chatManager.joinMessage(socket);
+        findNewDrawingPerson(socket);
         chatManager.sendSystemMessageToSender(
           socket,
           "Witaj " + user.nick + "! Twoje id, to: " + socket.id
@@ -108,8 +68,10 @@ module.exports = {
           createNewRandomPassword();
           //Wybranie nowej osoby rysującej
           findNewDrawingPerson();
+          //Czyszczenie tablicy
           io.emit("clear");
         }
+        //commands
         if (actualDrawingPlayerId != socket.id && message == "/losuj") {
           //Znajdź nowe hasło
           createNewRandomPassword();
@@ -140,7 +102,7 @@ module.exports = {
         }
       });
       socket.on("disconnect", function () {
-        socket.rooms;
+        chatManager.leftMessage(socket);
       });
     });
 
@@ -211,12 +173,12 @@ module.exports = {
     //     }
     //   });
     // }
-
+    function joinOrCreateRoom(socket, user) {}
     function createNewRandomPassword() {
       actualPassword = randomProperty(passwords);
     }
 
-    function findNewDrawingPerson() {
+    function findNewDrawingPerson(socket) {
       if (currentPlayersCount > 1) {
         do {
           var newDrawPersonId =
@@ -231,10 +193,11 @@ module.exports = {
           "Jesteś teraz osobą rysującą. Hasło, to : " + actualPassword
         );
       } else {
-        io.emit(
-          "chat message",
-          "Brak wystarczającej ilości graczy by wybrać nową osobę rysującą."
-        );
+        // chatManager.sendSystemMessageToAllInRoom(socket);
+        // io.emit(
+        //   "chat message",
+        //   "Brak wystarczającej ilości graczy by wybrać nową osobę rysującą."
+        // );
       }
     }
 
