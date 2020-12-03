@@ -1,31 +1,31 @@
 class User {
-  static Id;
-  static Name;
-  static Points;
-  static IsDraving;
-  static DrawingStartTime;
-  static DrawingTimes;
+  static id;
+  static nick;
+  static points;
+  static isDraving;
+  static drawingStartTime;
+  static drawingTimes;
 
-  constructor(id, name) {
-    this.Id = id;
-    this.Name = name;
-    this.Points = 0;
-    this.IsDraving = false;
-    this.DrawingTimeInCurrentGame = 0;
+  constructor(id, nick) {
+    this.id = id;
+    this.nick = nick;
+    this.points = 0;
+    this.isDraving = false;
+    this.drawingTimeInCurrentGame = 0;
   }
   addPoint() {
-    this.Points++;
+    this.points++;
   }
-  changeName(name) {
-    this.Name = name;
+  changeNick(nick) {
+    this.nick = nick;
   }
   startDrawing() {
-    isDraving = true;
-    DrawingStartTime = new Date();
+    this.isDraving = true;
+    this.drawingStartTime = new Date();
   }
   endDrawing() {
-    isDraving = false;
-    DrawingStartTime = null;
+    this.isDraving = false;
+    this.drawingStartTime = null;
   }
 }
 module.exports = User;

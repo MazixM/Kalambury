@@ -1,66 +1,99 @@
+var io;
 const utils = require("./utils");
 const chatName = "chat message";
+const errorName = "error";
 
 function sendUserMessageToAllInRoom(socket, message) {
-  if (isMessageCorrect(message)) {
-    socket
-      .to(socket.roomId)
-      .emit(utils.getCurrentTime() + " | " + socket.nick + " - " + message);
+  if (isSocketCorrect(socket)) {
+    if (isMessageCorrect(message)) {
+      io.to(socket.roomId).emit(
+        chatName,
+        utils.getCurrentTime() + " | " + socket.user.nick + " - " + message
+      );
+    }
   }
 }
 function sendSystemMessageToAllInRoom(socket, message) {
-  if (isMessageCorrect(message)) {
-    socket.broadcast
-      .to(socket.roomId)
-      .emit(chatName, "SYSTEM: " + utils.getCurrentTime() + " | " + message);
-  }
+  io.to(socket.roomId).emit(
+    chatName,
+    "SYSTEM: " + utils.getCurrentTime() + " | " + message
+  );
 }
 function sendSystemMessageToSender(socket, message) {
-  if (isMessageCorrect(message)) {
-    socket.emit(
-      chatName,
-      "SYSTEM: " + utils.getCurrentTime() + " | " + message
-    );
-  }
+  socket.emit(chatName, "SYSTEM: " + utils.getCurrentTime() + " | " + message);
 }
 function sendSystemMessageToOthersInRoom(socket, message) {
-  if (isMessageCorrect(message)) {
-    socket
-      .to(socket.roomId)
-      .emit(chatName, "SYSTEM: " + utils.getCurrentTime() + " | " + message);
-  }
+  socket
+    .to(socket.roomId)
+    .emit(chatName, "SYSTEM: " + utils.getCurrentTime() + " | " + message);
 }
 function isMessageCorrect(message) {
   return message != null && message.length > 1;
 }
+function isSocketCorrect(socket) {
+  if (
+    socket != undefined &&
+    socket.user != undefined &&
+    socket.roomId != undefined
+  ) {
+    return true;
+  } else {
+    socket.disconnect();
+    return false;
+  }
+}
 
 module.exports = {
-  sendUserMessageToAllInRoom: sendUserMessageToAllInRoom,
-  sendSystemMessageToSender: sendSystemMessageToSender,
-  sendSystemMessageToOthersInRoom: sendSystemMessageToOthersInRoom,
-  sendSystemMessageToAllInRoom: sendSystemMessageToAllInRoom,
-  winMessage: function (socket, roomId, nick) {
+  start: function (socketIO) {
+    io = socketIO;
+  },
+  sendUserMessageToAllInRoom,
+  winMessage: function (socket) {
     sendSystemMessageToAllInRoom(
       socket,
-      socket.nick + " wygrywa. Gratulacje!!!"
+      socket.user.nick + " wygrywa. Gratulacje!!!"
     );
   },
   newDrwingPersonMessage: function (socket) {
-    sendSystemMessageToAllInRoom(socket, socket.nick + "teraz rysuje.");
+    if (isSocketCorrect(socket)) {
+      sendSystemMessageToAllInRoom(socket, socket.user.nick + "teraz rysuje.");
+    }
   },
   gotPointMessage: function (socket) {
-    sendSystemMessageToAllInRoom(socket, socket.nick + "Zdobywa 1 punkt.");
+    if (isSocketCorrect(socket)) {
+      sendSystemMessageToAllInRoom(
+        socket,
+        socket.user.nick + "Zdobywa 1 punkt."
+      );
+    }
   },
-  newPasswordMessage: function (socket, password) {
-    sendSystemMessageToSender(socket, "nowe hasło brzmi: " + password);
+  newPasswordMessage: function (socket, newPassword) {
+    if (isSocketCorrect(socket)) {
+      sendSystemMessageToSender(socket, "nowe hasło brzmi: " + newPassword);
+    }
   },
   joinMessage: function (socket) {
-    sendSystemMessageToAllInRoom(
-      socket,
-      socket.nick + " właśnie dołączył do pokoju."
-    );
+    if (isSocketCorrect(socket)) {
+      sendSystemMessageToSender(
+        socket,
+        "Pomyślnie dołączono do pokoju o id: " + socket.roomId
+      );
+      sendSystemMessageToSender(
+        socket,
+        "Witaj " + socket.user.nick + "! Twoje id, to: " + socket.id
+      );
+      sendSystemMessageToOthersInRoom(
+        socket,
+        socket.user.nick + "  dołącza do pokoju."
+      );
+    }
   },
   leftMessage: function (socket) {
-    sendSystemMessageToAllInRoom(socket, socket.nick + " właśnie wyszedł.");
+    if (isSocketCorrect(socket)) {
+      sendSystemMessageToOthersInRoom(
+        socket,
+        socket.user.nick + " opuszcza pokój."
+      );
+    }
   },
 };

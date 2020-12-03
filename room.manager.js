@@ -1,88 +1,61 @@
 var fs = require("fs");
-var utils = require("./utils");
+//var utils = require("./utils");
 var chatManager = require("./chat.manager");
-//const Room = require("./models/room");
+const Room = require("./models/room");
 const User = require("./models/user");
+const utils = require("./utils");
 //Lista haseł do zgadnięcia
 var passwords = JSON.parse(fs.readFileSync("passwords.json", "utf8"));
 
-const size = function (obj) {
-  var size = 0,
-    key;
-  for (key in obj) {
-    if (obj.hasOwnProperty(key)) size++;
-  }
-  return size;
-};
+var rooms = {};
 
 module.exports = {
   start: function (io) {
+    chatManager.start(io);
     io.on("connection", function (socket) {
       //New user joined
       socket.on("new user", function (user) {
-        joinToRoom(socket, user);
-        socket.join(user.roomId);
-        socket.user = new User(socket.id, nick);
         socket.roomId = user.roomId;
-        socket.nick = user.nick;
-        chatManager.sendSystemMessageToSender(
-          socket,
-          "Pomyślnie dołączono do pokoju o id: " + socket.roomId
-        );
-        chatManager.joinMessage(socket);
+        joinOrCreateRoom(socket, new User(socket.id, user.nick));
         findNewDrawingPerson(socket);
-        chatManager.sendSystemMessageToSender(
-          socket,
-          "Witaj " + user.nick + "! Twoje id, to: " + socket.id
-        );
       });
-      //Some user send message
       socket.on("chat message", function (message) {
-        chatManager.sendUserMessageToAllInRoom(socket);
-        if (
-          message.toLowerCase().trim() == actualPassword.toLowerCase().trim() &&
-          actualDrawingPlayerId != socket.id
-        ) {
-          //Aktualnie gra toczy się do 5 wygranych
-          if (points[socket.id] == undefined) {
-            points[socket.id] = 0;
-          }
-          if (++points[socket.id] < 5) {
-            io.emit(
-              "chat message",
-              message.nick +
-                " zgaduje hasło i zdobywa 1 punkt! Łącznie posiada ich : " +
-                points[socket.id]
-            );
-          } else {
-            //Informacja o wygranej
-            io.emit(
-              "chat message",
-              message.nick + " zgaduje hasło i wygrywa! Gratulacje! "
-            );
-            //Reset wyników
-            delete points;
-            points = {};
-          }
-          //Znajdź nowe hasło
-          createNewRandomPassword();
-          //Wybranie nowej osoby rysującej
-          findNewDrawingPerson();
-          //Czyszczenie tablicy
-          io.emit("clear");
-        }
+        chatManager.sendUserMessageToAllInRoom(socket, message);
+        // if (
+        //   message.toLowerCase().trim() == actualPassword.toLowerCase().trim() &&
+        //   actualDrawingPlayerId != socket.id
+        // ) {
+        //   if (++points[socket.id] < 5) {
+        //     io.emit(
+        //       "chat message",
+        //       message.nick +
+        //         " zgaduje hasło i zdobywa 1 punkt! Łącznie posiada ich : " +
+        //         points[socket.id]
+        //     );
+        //   } else {
+        //     //Informacja o wygranej
+        //     chatManager.winMessage(socket);
+        //     //Reset wyników
+        //   }
+        //   //Znajdź nowe hasło
+        //   createNewRandomPassword();
+        //   //Wybranie nowej osoby rysującej
+        //   findNewDrawingPerson();
+        //   //Czyszczenie tablicy
+        //   io.emit("clear");
+        // }
         //commands
-        if (actualDrawingPlayerId != socket.id && message == "/losuj") {
-          //Znajdź nowe hasło
-          createNewRandomPassword();
-          //Wybranie nowej osoby rysującej
-          findNewDrawingPerson();
-        }
-        if (actualDrawingPlayerId == socket.id && message == "/nowe") {
-          //Generowanie nowego hasła przez osobę rysującą
-          createNewRandomPassword();
-          chatManager.newPasswordMessage(socket, actualPassword);
-        }
+        // if (actualDrawingPlayerId != socket.id && message == "/losuj") {
+        //   //Znajdź nowe hasło
+        //   createNewRandomPassword();
+        //   //Wybranie nowej osoby rysującej
+        //   findNewDrawingPerson();
+        // }
+        // if (actualDrawingPlayerId == socket.id && message == "/nowe") {
+        //   //Generowanie nowego hasła przez osobę rysującą
+        //   createNewRandomPassword();
+        //   chatManager.newPasswordMessage(socket, actualPassword);
+        // }
       });
       //Rysowanie lini
       socket.on("drawLine", function (lineFromTo) {
@@ -90,19 +63,33 @@ module.exports = {
         if (lineFromTo.lineWidth > 10 || lineFromTo.lineWidth < 1) {
           return;
         }
-        //Tylko osoba rysująca może rysować
-        if (socket.id == actualDrawingPlayerId) {
-          socket.broadcast.emit("drawLine", lineFromTo);
+        //Tylko osoba rysująca może rysować u innych
+        if (rooms[socket.roomId] != undefined) {
+          if (socket.id == rooms[socket.roomId].currentDrawingUserId) {
+            io.to(socket.roomId).emit("drawLine", lineFromTo);
+          }
         }
       });
-      //Tylko osoba rysująca może wyczyścić innym canvas
+      //Czyszczenie canvas
       socket.on("clear", function () {
-        if (socket.id == actualDrawingPlayerId) {
-          socket.broadcast.emit("clear");
+        if (rooms[socket.roomId] != undefined) {
+          //Tylko osoba rysująca może wyczyścić innym canvas
+          if (socket.id == rooms[socket.roomId].currentDrawingUserId) {
+            io.to(socket.roomId).emit("clear");
+          }
         }
       });
       socket.on("disconnect", function () {
-        chatManager.leftMessage(socket);
+        if (rooms[socket.roomId] != undefined) {
+          //Usunięcie użytkownika z pokoju
+          rooms[socket.roomId].removeUserBy(socket.id);
+          if (rooms[socket.roomId].connectedUsers() <= 0) {
+            //Usunięcie pokoju, gdy nie ma w nim nikogo
+            delete rooms[socket.roomId];
+          } else {
+            chatManager.leftMessage(socket);
+          }
+        }
       });
     });
 
@@ -173,37 +160,37 @@ module.exports = {
     //     }
     //   });
     // }
-    function joinOrCreateRoom(socket, user) {}
-    function createNewRandomPassword() {
-      actualPassword = randomProperty(passwords);
-    }
-
-    function findNewDrawingPerson(socket) {
-      if (currentPlayersCount > 1) {
-        do {
-          var newDrawPersonId =
-            currentPlayersId[(currentPlayersId.length * Math.random()) << 0];
-        } while (actualDrawingPlayerId == newDrawPersonId);
-        actualDrawingPlayerId = newDrawPersonId;
-        console.log("New drawing client " + actualDrawingPlayerId);
-        io.emit("chat message", "Wybrano nową osobę rysującą");
-        createNewRandomPassword();
-        myClientList[actualDrawingPlayerId].emit(
-          "chat message",
-          "Jesteś teraz osobą rysującą. Hasło, to : " + actualPassword
-        );
+    function joinOrCreateRoom(socket, user) {
+      socket.join(socket.roomId);
+      socket.user = user;
+      chatManager.joinMessage(socket);
+      if (rooms[socket.roomId] == null) {
+        //Create new room
+        rooms[socket.roomId] = new Room(socket.roomId, socket.user);
       } else {
-        // chatManager.sendSystemMessageToAllInRoom(socket);
-        // io.emit(
-        //   "chat message",
-        //   "Brak wystarczającej ilości graczy by wybrać nową osobę rysującą."
-        // );
+        //Try join to exist room
       }
+      socket.user.startDrawing();
     }
 
-    function randomProperty(obj) {
-      var keys = Object.keys(obj);
-      return obj[keys[(keys.length * Math.random()) << 0]];
+    function getRandomPasswordFromJson() {
+      return utils.randomProperty(passwords);
+    }
+
+    function setNewPasswordToGuessInRoom(socket) {
+      let passwordToGuess = getRandomPasswordFromJson();
+      rooms[socket.roomId].setPasswordToGuess(passwordToGuess);
+      chatManager.newPasswordMessage(socket, passwordToGuess);
+    }
+
+    function findNewDrawingPersonInRoom(socket) {
+      let passwordToGuess = getRandomPasswordFromJson();
+      rooms[socket.roomId].setPasswordToGuess(passwordToGuess);
+      chatManager.newDrwingPersonMessage(socket);
+      // io.emit(
+      //   "chat message",
+      //   "Brak wystarczającej ilości graczy by wybrać nową osobę rysującą."
+      // );
     }
   },
 };
