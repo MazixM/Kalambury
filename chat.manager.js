@@ -1,7 +1,7 @@
 var io;
 const utils = require("./utils");
 const chatName = "chat message";
-const errorName = "error";
+//const errorName = "error";
 
 function sendUserMessageToAllInRoom(socket, message) {
   if (isSocketCorrect(socket)) {
@@ -48,6 +48,9 @@ module.exports = {
     io = socketIO;
   },
   sendUserMessageToAllInRoom,
+  roomIsFull: function (socket) {
+    sendSystemMessageToSender(socket, "Wybrany pokój jest pełen");
+  },
   winMessage: function (socket) {
     sendSystemMessageToAllInRoom(
       socket,

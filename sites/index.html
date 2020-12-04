@@ -102,7 +102,7 @@
         </form>
     </div>
     <div class="buttons">
-        <button onclick="clearCanvasLocalAndRemote();">Wyczyść</button>
+        <button onclick="clearCanvas();">Wyczyść</button>
 
         <input type="color" id="color" name="head" value="#e66465">
         <label for="head">Kolor lini</label>
@@ -240,7 +240,7 @@
             ctx.stroke();
         }
 
-        //Funkcja czyszcząca Canvas lokalnie
+        // //Funkcja czyszcząca Canvas lokalnie
         function clearCanvasLocal() {
             var canvas = document.getElementById('can');
             const context = canvas.getContext('2d');
@@ -248,12 +248,11 @@
         }
 
         //Funkcja czyszcząca Canvas lokalnie i zdalnie
-        function clearCanvasLocalAndRemote() {
+        function clearCanvas() {
             //Wyślij do serwera informacje o czyszczeniu
             var now = new Date();
             if ((now.getTime() - lastClearTime.getTime()) >= 10000) {
                 lastClearTime = now;
-                clearCanvasLocal();
                 socket.emit('clear');
             } else {
                 var timeLeft = Math.floor((lastClearTime.getTime() - now.getTime() + 10000) / 1000);

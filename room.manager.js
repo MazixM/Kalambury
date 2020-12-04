@@ -17,45 +17,10 @@ module.exports = {
       socket.on("new user", function (user) {
         socket.roomId = user.roomId;
         joinOrCreateRoom(socket, new User(socket.id, user.nick));
-        findNewDrawingPerson(socket);
       });
+      //Wysyłanie/obieranie wiadomości
       socket.on("chat message", function (message) {
-        chatManager.sendUserMessageToAllInRoom(socket, message);
-        // if (
-        //   message.toLowerCase().trim() == actualPassword.toLowerCase().trim() &&
-        //   actualDrawingPlayerId != socket.id
-        // ) {
-        //   if (++points[socket.id] < 5) {
-        //     io.emit(
-        //       "chat message",
-        //       message.nick +
-        //         " zgaduje hasło i zdobywa 1 punkt! Łącznie posiada ich : " +
-        //         points[socket.id]
-        //     );
-        //   } else {
-        //     //Informacja o wygranej
-        //     chatManager.winMessage(socket);
-        //     //Reset wyników
-        //   }
-        //   //Znajdź nowe hasło
-        //   createNewRandomPassword();
-        //   //Wybranie nowej osoby rysującej
-        //   findNewDrawingPerson();
-        //   //Czyszczenie tablicy
-        //   io.emit("clear");
-        // }
-        //commands
-        // if (actualDrawingPlayerId != socket.id && message == "/losuj") {
-        //   //Znajdź nowe hasło
-        //   createNewRandomPassword();
-        //   //Wybranie nowej osoby rysującej
-        //   findNewDrawingPerson();
-        // }
-        // if (actualDrawingPlayerId == socket.id && message == "/nowe") {
-        //   //Generowanie nowego hasła przez osobę rysującą
-        //   createNewRandomPassword();
-        //   chatManager.newPasswordMessage(socket, actualPassword);
-        // }
+        onChatMessageRecived(message);
       });
       //Rysowanie lini
       socket.on("drawLine", function (lineFromTo) {
@@ -64,19 +29,21 @@ module.exports = {
           return;
         }
         //Tylko osoba rysująca może rysować u innych
-        if (rooms[socket.roomId] != undefined) {
-          if (socket.id == rooms[socket.roomId].currentDrawingUserId) {
-            io.to(socket.roomId).emit("drawLine", lineFromTo);
-          }
+        if (
+          rooms[socket.roomId] != undefined &&
+          socket.id == rooms[socket.roomId].currentDrawingUserId
+        ) {
+          io.to(socket.roomId).emit("drawLine", lineFromTo);
         }
       });
       //Czyszczenie canvas
       socket.on("clear", function () {
-        if (rooms[socket.roomId] != undefined) {
+        if (
+          rooms[socket.roomId] != undefined &&
+          socket.id == rooms[socket.roomId].currentDrawingUserId
+        ) {
           //Tylko osoba rysująca może wyczyścić innym canvas
-          if (socket.id == rooms[socket.roomId].currentDrawingUserId) {
-            io.to(socket.roomId).emit("clear");
-          }
+          io.to(socket.roomId).emit("clear");
         }
       });
       socket.on("disconnect", function () {
@@ -92,7 +59,44 @@ module.exports = {
         }
       });
     });
-
+    function onChatMessageRecived(message) {
+      chatManager.sendUserMessageToAllInRoom(socket, message);
+      // if (
+      //   message.toLowerCase().trim() == actualPassword.toLowerCase().trim() &&
+      //   actualDrawingPlayerId != socket.id
+      // ) {
+      //   if (++points[socket.id] < 5) {
+      //     io.emit(
+      //       "chat message",
+      //       message.nick +
+      //         " zgaduje hasło i zdobywa 1 punkt! Łącznie posiada ich : " +
+      //         points[socket.id]
+      //     );
+      //   } else {
+      //     //Informacja o wygranej
+      //     chatManager.winMessage(socket);
+      //     //Reset wyników
+      //   }
+      //   //Znajdź nowe hasło
+      //   createNewRandomPassword();
+      //   //Wybranie nowej osoby rysującej
+      //   findNewDrawingPerson();
+      //   //Czyszczenie tablicy
+      //   io.emit("clear");
+      // }
+      //commands
+      // if (actualDrawingPlayerId != socket.id && message == "/losuj") {
+      //   //Znajdź nowe hasło
+      //   createNewRandomPassword();
+      //   //Wybranie nowej osoby rysującej
+      //   findNewDrawingPerson();
+      // }
+      // if (actualDrawingPlayerId == socket.id && message == "/nowe") {
+      //   //Generowanie nowego hasła przez osobę rysującą
+      //   createNewRandomPassword();
+      //   chatManager.newPasswordMessage(socket, actualPassword);
+      // }
+    }
     //Event podczas połączenia nowej osoby
     // io.sockets.on("connection", newConnection);
     // function newConnection(socket) {
@@ -136,7 +140,7 @@ module.exports = {
     //     //Zmniejszenie ilości graczy
     //     currentPlayersCount -= 1;
     //     //Wysłanie informacji o aktualnej ilości graczy
-    //     io.emit("currentPlayersCount", currentPlayersCount);
+
     //     //Zmniejszenie usunięcie ID z listy aktywnych graczy
     //     currentPlayersId = currentPlayersId.filter(function (e) {
     //       return e !== socket.id;
@@ -161,16 +165,22 @@ module.exports = {
     //   });
     // }
     function joinOrCreateRoom(socket, user) {
-      socket.join(socket.roomId);
       socket.user = user;
-      chatManager.joinMessage(socket);
       if (rooms[socket.roomId] == null) {
         //Create new room
+        socket.join(socket.roomId);
         rooms[socket.roomId] = new Room(socket.roomId, socket.user);
+        chatManager.joinMessage(socket);
+        socket.user.startDrawing();
       } else {
         //Try join to exist room
+        if (rooms[socket.roomId].addUser(socket.user)) {
+          socket.join(socket.roomId);
+          chatManager.joinMessage(socket);
+        } else {
+          chatManager.roomIsFull(socket);
+        }
       }
-      socket.user.startDrawing();
     }
 
     function getRandomPasswordFromJson() {
