@@ -47,5 +47,22 @@ class Room {
   setPasswordToGuess(password) {
     this.currentPasswordToGuess = password;
   }
+  resetUserPoints() {
+    for (const user in this.users) {
+      this.users[user].points = 0;
+    }
+    this.findNewDrawingUser();
+  }
+  findNewDrawingUser() {
+    if (this.connectedUsers() > 1) {
+      do {
+        var user = utils.randomProperty(this.users);
+      } while (user.id == this.currentDrawingUserId);
+      this.currentDrawingUserId = user.id;
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
 module.exports = Room;

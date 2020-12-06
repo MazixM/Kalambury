@@ -146,10 +146,6 @@
         } while (roomId == "null" || roomId.length < 3 || roomId.length > 10)
         var user = { nick: nick, roomId: roomId }
         socket.emit("new user", user);
-        //
-        socket.on('drawLine', function (lineFromTo) {
-            drawRemoteLine(lineFromTo);
-        });
         //Rysowanie zdalnie
         socket.on('drawLine', function (lineFromTo) {
             drawRemoteLine(lineFromTo);

@@ -57,22 +57,26 @@ module.exports = {
       socket.user.nick + " wygrywa. Gratulacje!!!"
     );
   },
-  newDrwingPersonMessage: function (socket) {
+  newDrwingPersonMessage: function (socket, password) {
     if (isSocketCorrect(socket)) {
-      sendSystemMessageToAllInRoom(socket, socket.user.nick + "teraz rysuje.");
+      sendSystemMessageToAllInRoom(socket, socket.user.nick + " teraz rysuje.");
+      sendSystemMessageToSender(socket, "Hasło brzmi: " + password);
     }
   },
   gotPointMessage: function (socket) {
     if (isSocketCorrect(socket)) {
       sendSystemMessageToAllInRoom(
         socket,
-        socket.user.nick + "Zdobywa 1 punkt."
+        socket.user.nick +
+          " zdobywa 1 punkt. Łącznie ma ich " +
+          socket.user.points +
+          "."
       );
     }
   },
   newPasswordMessage: function (socket, newPassword) {
     if (isSocketCorrect(socket)) {
-      sendSystemMessageToSender(socket, "nowe hasło brzmi: " + newPassword);
+      sendSystemMessageToSender(socket, "Nowe hasło brzmi: " + newPassword);
     }
   },
   joinMessage: function (socket) {
